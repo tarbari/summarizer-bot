@@ -49,7 +49,7 @@ class SummarizerBot:
 
         @bot.command(name="summary")
         async def manual_summary_command(ctx: commands.Context):
-            """Manual summary command that generates an LLM-powered summary"""
+            """Manual summary command that generates an LLM-powered summary and sends it to the current channel"""
             await ctx.send("Contacting LLM to generate summary...")
 
             try:
@@ -132,8 +132,8 @@ class SummarizerBot:
         if message.author == self.bot.user:
             return
 
-        # Only process messages from the configured channel
-        if message.channel.id == self.config.get_channel_id():
+        # Only process messages from the configured monitor channel
+        if message.channel.id == self.config.get_monitor_channel():
             # Check if author is whitelisted
             if str(message.author.id) in self.config.get_whitelisted_users():
                 # Debug: Check message components and attachments
@@ -167,19 +167,32 @@ class SummarizerBot:
         await self.bot.process_commands(message)
 
     async def _run_daily_summary(self):
-        """Run the daily summary generation and posting"""
+        """Run the daily summary generation and posting to subscriber channels only"""
         print("Running daily summary task...")
 
         try:
-            # Generate and send summary
-            success = await self.summary_generator.send_summary_to_channel(
-                self.bot, self.config.get_channel_id()
+            # Get subscriber channels from config (only these will receive summaries)
+            subscriber_channels = self.config.get_subscriber_channels()
+
+            if not subscriber_channels:
+                print("No subscriber channels configured, skipping summary sending")
+                return
+
+            print(f"Sending summary to {len(subscriber_channels)} subscriber channels")
+
+            # Send to subscriber channels only
+            results = await self.summary_generator.send_summary_to_subscriber_channels(
+                self.bot,
+                subscriber_channels
             )
 
-            if success:
-                print("Daily summary sent successfully")
-            else:
-                print("Failed to send daily summary")
+            # Log results
+            successful_channels = [cid for cid, success in results.items() if success]
+            failed_channels = [cid for cid, success in results.items() if not success]
+
+            print(f"Successfully sent to channels: {successful_channels}")
+            if failed_channels:
+                print(f"Failed to send to channels: {failed_channels}")
 
         except Exception as e:
             print(f"Error in daily summary task: {e}")

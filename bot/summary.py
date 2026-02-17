@@ -88,10 +88,25 @@ class SummaryGenerator:
 
         return "\n".join(summary_lines)
 
-    async def send_summary_to_channel(self, bot: commands.Bot, channel_id: int) -> bool:
-        """Send the generated summary to the specified channel"""
+    async def send_summary_to_subscriber_channels(
+        self, bot: commands.Bot, subscriber_channel_ids: list
+    ) -> dict:
+        """Send summary to all subscriber channels only"""
+        results = {}
+        summary_content = self.generate_daily_summary()
+
+        for channel_id in subscriber_channel_ids:
+            results[channel_id] = await self._send_to_single_channel(
+                bot, channel_id, summary_content
+            )
+
+        return results
+
+    async def _send_to_single_channel(
+        self, bot: commands.Bot, channel_id: int, summary_content: str
+    ) -> bool:
+        """Helper method to send summary to a single channel"""
         try:
-            summary_content = self.generate_daily_summary()
             channel = bot.get_channel(channel_id)
 
             if isinstance(channel, TextChannel):
@@ -102,8 +117,14 @@ class SummaryGenerator:
                 return False
 
         except Exception as e:
-            print(f"Error sending summary: {e}")
+            print(f"Error sending summary to channel {channel_id}: {e}")
             return False
+
+    # Deprecated method - kept for backward compatibility but not used
+    async def send_summary_to_channel(self, bot: commands.Bot, channel_id: int) -> bool:
+        """Deprecated: Send the generated summary to the specified channel"""
+        print("Warning: send_summary_to_channel is deprecated. Use send_summary_to_subscriber_channels instead.")
+        return await self._send_to_single_channel(bot, channel_id, self.generate_daily_summary())
 
     def get_summary_schedule(self) -> datetime:
         """Get the next scheduled summary time"""

@@ -44,16 +44,17 @@ class Config:
                 ".env file is missing BOT_TOKEN, LLM_API_KEY, or LLM_API_URL"
             )
 
-        # Channel ID can come from .env
-        if "CHANNEL_ID" in os.environ:
-            self.config_data["bot"]["channel_id"] = int(os.environ["CHANNEL_ID"])
+        # Monitor channel ID can come from .env
+        if "MONITOR_CHANNEL" in os.environ:
+            self.config_data["bot"]["monitor_channel"] = int(os.environ["MONITOR_CHANNEL"])
 
     def _validate_config(self) -> None:
         """Validate that required configuration values are present"""
         required_fields = {
-            "bot.channel_id": int,
+            "bot.monitor_channel": int,
             "bot.summary_time": str,
             "bot.timezone": str,
+            "bot.subscriber_channels": list,
             "whitelist.users": list,
             "api.model": str,
         }
@@ -81,9 +82,13 @@ class Config:
         """Get the Discord bot token"""
         return self.config_data["bot"]["token"]
 
-    def get_channel_id(self) -> int:
-        """Get the channel ID to monitor"""
-        return self.config_data["bot"]["channel_id"]
+    def get_monitor_channel(self) -> int:
+        """Get the channel ID to monitor for messages"""
+        return self.config_data["bot"]["monitor_channel"]
+
+    def get_subscriber_channels(self) -> list:
+        """Get the list of subscriber channel IDs where summaries should be sent"""
+        return self.config_data["bot"]["subscriber_channels"]
 
     def get_summary_time(self) -> datetime:
         """Get the scheduled summary time as a timezone-aware datetime"""

@@ -2,14 +2,19 @@
 # This file uses TOML format for configuration
 
 [bot]
-# Channel ID to monitor for messages
-channel_id = 0
+# Channel ID to monitor for messages (this channel's messages are summarized)
+monitor_channel = 0
 
 # Time to post daily summary (24h format)
 summary_time = "09:00"
 
 # Timezone for summary scheduling
 timezone = "UTC"
+
+# List of channel IDs to send summaries to (summaries are sent to these channels only)
+subscriber_channels = [
+    123456789,  # Example: replace with actual channel IDs
+]
 
 [whitelist]
 # List of user IDs whose messages should be included in summaries
