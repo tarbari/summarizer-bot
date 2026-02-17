@@ -23,23 +23,25 @@ class SummaryGenerator:
         """Truncate a message to fit Discord's limit while preserving completeness"""
         if self._validate_message_length(message):
             return message
-        
+
         # Find the last complete sentence within the limit
         truncated = message[:DISCORD_MESSAGE_LIMIT]
-        
+
         # Try to find a clean break point (period, newline, etc.)
-        last_period = truncated.rfind('.')
-        last_newline = truncated.rfind('\n')
-        last_space = truncated.rfind(' ')
-        
+        last_period = truncated.rfind(".")
+        last_newline = truncated.rfind("\n")
+        last_space = truncated.rfind(" ")
+
         # Use the best break point found
-        break_points = [pos for pos in [last_period, last_newline, last_space] if pos > 0]
+        break_points = [
+            pos for pos in [last_period, last_newline, last_space] if pos > 0
+        ]
         if break_points:
             end_pos = max(break_points)
             truncated = message[:end_pos] + "..."
         else:
-            truncated = message[:DISCORD_MESSAGE_LIMIT-3] + "..."
-        
+            truncated = message[: DISCORD_MESSAGE_LIMIT - 3] + "..."
+
         return truncated
 
     def _initialize_llm_client(self) -> None:
@@ -93,22 +95,28 @@ class SummaryGenerator:
             for attempt in range(MAX_RETRY_ATTEMPTS):
                 try:
                     summary = await self.generate_llm_summary()
-                    
+
                     # Validate the length and retry if too long
                     if self._validate_message_length(summary):
                         return summary
                     else:
-                        print(f"LLM summary too long ({len(summary)} chars), retrying with more concise instructions...")
+                        print(
+                            f"LLM summary too long ({len(summary)} chars), retrying with more concise instructions..."
+                        )
                         # The prompt already includes length instructions, so we'll just retry
                         # If it fails again, we'll truncate on the last attempt
-                        
+
                 except Exception as e:
-                    print(f"LLM summary failed on attempt {attempt + 1}, falling back to placeholder: {e}")
+                    print(
+                        f"LLM summary failed on attempt {attempt + 1}, falling back to placeholder: {e}"
+                    )
                     break
-            
+
             # If we get here, either LLM failed or we need to truncate the result
-            if 'summary' in locals() and not self._validate_message_length(summary):
-                print(f"Final LLM summary still too long ({len(summary)} chars), truncating...")
+            if "summary" in locals() and not self._validate_message_length(summary):
+                print(
+                    f"Final LLM summary still too long ({len(summary)} chars), truncating..."
+                )
                 return self._truncate_message(summary)
 
         # Fallback to placeholder implementation
@@ -157,7 +165,7 @@ class SummaryGenerator:
         try:
             # Ensure the message fits Discord's limits
             validated_content = self._truncate_message(summary_content)
-            
+
             channel = bot.get_channel(channel_id)
 
             if isinstance(channel, TextChannel):
@@ -174,8 +182,12 @@ class SummaryGenerator:
     # Deprecated method - kept for backward compatibility but not used
     async def send_summary_to_channel(self, bot: commands.Bot, channel_id: int) -> bool:
         """Deprecated: Send the generated summary to the specified channel"""
-        print("Warning: send_summary_to_channel is deprecated. Use send_summary_to_subscriber_channels instead.")
-        return await self._send_to_single_channel(bot, channel_id, await self.generate_daily_summary())
+        print(
+            "Warning: send_summary_to_channel is deprecated. Use send_summary_to_subscriber_channels instead."
+        )
+        return await self._send_to_single_channel(
+            bot, channel_id, await self.generate_daily_summary()
+        )
 
     def get_summary_schedule(self) -> datetime:
         """Get the next scheduled summary time"""

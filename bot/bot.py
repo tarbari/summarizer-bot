@@ -134,24 +134,34 @@ class SummarizerBot:
             # Check if author is whitelisted
             if str(message.author.id) in self.config.get_whitelisted_users():
                 # Debug: Check message components and attachments
-                has_components = hasattr(message, 'components') and message.components
-                has_attachments = hasattr(message, 'attachments') and message.attachments
+                has_components = hasattr(message, "components") and message.components
+                has_attachments = (
+                    hasattr(message, "attachments") and message.attachments
+                )
                 has_embeds = message.embeds
                 has_content = message.content.strip()
-                
-                print(f"DEBUG: Message from {message.author} - Content: {has_content}, Embeds: {has_embeds}, Components: {has_components}, Attachments: {has_attachments}")
-                
+
+                print(
+                    f"DEBUG: Message from {message.author} - Content: {has_content}, Embeds: {has_embeds}, Components: {has_components}, Attachments: {has_attachments}"
+                )
+
                 # Store the message
                 if self.message_store.store_message(message):
                     # Improved logging to show content type
                     if message.content.strip() and message.embeds:
-                        print(f"Stored combined message from {message.author}: text + embeds")
+                        print(
+                            f"Stored combined message from {message.author}: text + embeds"
+                        )
                     elif message.content.strip():
-                        print(f"Stored text message from {message.author}: {message.content[:50]}...")
+                        print(
+                            f"Stored text message from {message.author}: {message.content[:50]}..."
+                        )
                     elif message.embeds:
                         print(f"Stored embed message from {message.author} (RSS feed)")
                     else:
-                        print(f"Stored message from {message.author} (no visible content)")
+                        print(
+                            f"Stored message from {message.author} (no visible content)"
+                        )
 
                     # Update last processed message ID
                     self.message_store.set_last_processed_id(str(message.id))
@@ -179,8 +189,7 @@ class SummarizerBot:
 
             # Send to subscriber channels only
             results = await self.summary_generator.send_summary_to_subscriber_channels(
-                self.bot,
-                subscriber_channels
+                self.bot, subscriber_channels
             )
 
             # Log results

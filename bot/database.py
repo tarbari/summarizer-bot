@@ -71,18 +71,22 @@ class MessageStore:
                 content_parts.append(f"Source: {embed.url}")
 
             # Add footer if available and different from URL
-            if embed.footer and embed.footer.text and (not embed.url or embed.footer.text != embed.url):
+            if (
+                embed.footer
+                and embed.footer.text
+                and (not embed.url or embed.footer.text != embed.url)
+            ):
                 content_parts.append(f"_{embed.footer.text}_")
 
         return "\n".join(content_parts)
 
     def _extract_component_content(self, message: Message) -> str:
         """Extract content from Discord message components (buttons, select menus, etc.)"""
-        if not hasattr(message, 'components') or not message.components:
+        if not hasattr(message, "components") or not message.components:
             return ""
 
         content_parts = []
-        
+
         for component in message.components:
             content_parts.extend(self._extract_from_component(component))
 
@@ -91,34 +95,34 @@ class MessageStore:
     def _extract_from_component(self, component) -> List[str]:
         """Recursively extract content from a component and its children"""
         content_parts = []
-        
+
         # Handle different component types
-        if hasattr(component, 'content') and component.content:
+        if hasattr(component, "content") and component.content:
             # TextDisplay components have direct content
             content_parts.append(component.content)
-        
+
         # Handle children recursively
-        if hasattr(component, 'children') and component.children:
+        if hasattr(component, "children") and component.children:
             for child in component.children:
                 content_parts.extend(self._extract_from_component(child))
-        
+
         # Handle other component attributes
-        if hasattr(component, 'label') and component.label:
+        if hasattr(component, "label") and component.label:
             content_parts.append(f"[{component.label}]")
-        if hasattr(component, 'value') and component.value:
+        if hasattr(component, "value") and component.value:
             content_parts.append(component.value)
-        if hasattr(component, 'placeholder') and component.placeholder:
+        if hasattr(component, "placeholder") and component.placeholder:
             content_parts.append(f"({component.placeholder})")
-        
+
         return content_parts
 
     def _extract_attachment_content(self, message: Message) -> str:
         """Extract content from message attachments"""
-        if not hasattr(message, 'attachments') or not message.attachments:
+        if not hasattr(message, "attachments") or not message.attachments:
             return ""
 
         content_parts = []
-        
+
         for attachment in message.attachments:
             if attachment.filename:
                 content_parts.append(f"Attachment: {attachment.filename}")

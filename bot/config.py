@@ -46,7 +46,9 @@ class Config:
 
         # Monitor channel ID can come from .env
         if "MONITOR_CHANNEL" in os.environ:
-            self.config_data["bot"]["monitor_channel"] = int(os.environ["MONITOR_CHANNEL"])
+            self.config_data["bot"]["monitor_channel"] = int(
+                os.environ["MONITOR_CHANNEL"]
+            )
 
     def _validate_config(self) -> None:
         """Validate that required configuration values are present"""
@@ -84,7 +86,9 @@ class Config:
         if not isinstance(max_tokens, int) or max_tokens <= 0:
             raise ValueError("max_tokens must be a positive integer")
         if max_tokens > 32000:  # Reasonable upper limit for most models
-            print(f"Warning: max_tokens ({max_tokens}) is very large. Most models support 4000-8000 tokens.")
+            print(
+                f"Warning: max_tokens ({max_tokens}) is very large. Most models support 4000-8000 tokens."
+            )
 
     def get_bot_token(self) -> str:
         """Get the Discord bot token"""
