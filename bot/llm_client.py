@@ -34,6 +34,7 @@ class LLMClient:
                 model=model_name,
                 temperature=0.7,  # Slightly creative but focused
                 timeout=30,  # 30 second timeout
+                max_tokens=self.config.get_max_tokens(),  # Limit response length
             )
 
             return model

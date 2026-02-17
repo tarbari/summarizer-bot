@@ -27,3 +27,7 @@ users = [
 # LLM Model to use for summarization
 # This should match a model available in your LM Studio server
 model = "gpt-3.5-turbo"
+
+# Maximum tokens for LLM responses (adjust based on your model's context window)
+# Common values: 2000 for basic models, 4000-8000 for larger context windows
+max_tokens = 4000

@@ -53,14 +53,11 @@ class SummarizerBot:
             await ctx.send("Contacting LLM to generate summary...")
 
             try:
-                # Use the async LLM summary method directly
-                summary = await self.summary_generator.generate_llm_summary()
+                # Use the async daily summary method
+                summary = await self.summary_generator.generate_daily_summary()
                 await ctx.send(summary)
             except Exception as e:
-                await ctx.send(f"Failed to generate LLM summary: {e}")
-                await ctx.send("Falling back to basic summary...")
-                summary = self.summary_generator.generate_daily_summary()
-                await ctx.send(summary)
+                await ctx.send(f"Failed to generate summary: {e}")
 
         @bot.command(name="lottonumerot")
         async def lotto_command(ctx: commands.Context):

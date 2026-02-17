@@ -51,17 +51,15 @@ class SummaryGenerator:
             print(f"Failed to generate LLM summary: {e}")
             return f"Failed to generate summary: {e}"
 
-    def generate_daily_summary(self) -> str:
+    async def generate_daily_summary(self) -> str:
         """
         Generate a daily summary of messages
         Uses LLM if available, falls back to placeholder if not
         """
         # Try to use LLM summary if available
         if self.llm_client:
-            import asyncio
-
             try:
-                return asyncio.run(self.generate_llm_summary())
+                return await self.generate_llm_summary()
             except Exception as e:
                 print(f"LLM summary failed, falling back to placeholder: {e}")
 
@@ -93,7 +91,7 @@ class SummaryGenerator:
     ) -> dict:
         """Send summary to all subscriber channels only"""
         results = {}
-        summary_content = self.generate_daily_summary()
+        summary_content = await self.generate_daily_summary()
 
         for channel_id in subscriber_channel_ids:
             results[channel_id] = await self._send_to_single_channel(
@@ -124,7 +122,7 @@ class SummaryGenerator:
     async def send_summary_to_channel(self, bot: commands.Bot, channel_id: int) -> bool:
         """Deprecated: Send the generated summary to the specified channel"""
         print("Warning: send_summary_to_channel is deprecated. Use send_summary_to_subscriber_channels instead.")
-        return await self._send_to_single_channel(bot, channel_id, self.generate_daily_summary())
+        return await self._send_to_single_channel(bot, channel_id, await self.generate_daily_summary())
 
     def get_summary_schedule(self) -> datetime:
         """Get the next scheduled summary time"""

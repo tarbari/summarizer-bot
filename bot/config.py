@@ -57,6 +57,7 @@ class Config:
             "bot.subscriber_channels": list,
             "whitelist.users": list,
             "api.model": str,
+            "api.max_tokens": int,
         }
 
         for field_path, expected_type in required_fields.items():
@@ -77,6 +78,13 @@ class Config:
                 raise ValueError(f"Missing required configuration: {field_path}")
             except Exception as e:
                 raise ValueError(f"Invalid configuration for {field_path}: {e}")
+
+        # Additional validation for max_tokens
+        max_tokens = self.config_data["api"]["max_tokens"]
+        if not isinstance(max_tokens, int) or max_tokens <= 0:
+            raise ValueError("max_tokens must be a positive integer")
+        if max_tokens > 32000:  # Reasonable upper limit for most models
+            print(f"Warning: max_tokens ({max_tokens}) is very large. Most models support 4000-8000 tokens.")
 
     def get_bot_token(self) -> str:
         """Get the Discord bot token"""
@@ -128,3 +136,7 @@ class Config:
     def get_llm_model(self) -> str:
         """Get the configured LLM model name"""
         return self.config_data["api"]["model"]
+
+    def get_max_tokens(self) -> int:
+        """Get the configured maximum tokens for LLM responses"""
+        return self.config_data["api"]["max_tokens"]
