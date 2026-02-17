@@ -1,34 +1,27 @@
-FROM ghcr.io/astral-sh/uv:python3.12-trixie-slim
+FROM python:3.12-slim
 
 WORKDIR /app
 
 # Install system dependencies
 RUN apt-get update && apt-get install -y --no-install-recommends \
-    curl \
     ca-certificates \
     && rm -rf /var/lib/apt/lists/*
 
-# Create and switch to non-root user for security
-RUN useradd -m appuser && chown -R appuser:appuser /app
-USER appuser
-
 # Copy project files
-COPY pyproject.toml uv.lock ./
+COPY requirements.txt ./
 
-# Install dependencies using uv
-RUN uv sync
+# Install dependencies
+RUN pip install --no-cache-dir -r requirements.txt
 
 # Copy application code
-COPY main.py bot/ ./
+COPY main.py ./
+COPY config.toml ./
+COPY bot/ ./bot/
 
-# Set environment variables (will be overridden by docker run -e or .env file)
-ENV BOT_TOKEN="" \
-    LLM_API_URL="" \
-    LLM_API_KEY=""
-
-# Health check
+# Health check (example: check if main.py can import critical modules)
 HEALTHCHECK --interval=30s --timeout=3s \
-    CMD python -c "import sys; sys.exit(0 if open('main.py').read() else 1)" || exit 1
+    CMD python3 -c "import main; print('OK')" || exit 1
 
 # Command to run the bot
-CMD ["uv", "run", "python", "main.py"]
+CMD ["python3", "main.py"]
+
