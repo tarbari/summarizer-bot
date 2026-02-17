@@ -21,8 +21,8 @@ ENV PATH="/root/.cargo/bin:${PATH}"
 # Copy project files
 COPY pyproject.toml uv.lock ./
 
-# Install dependencies using uv
-RUN uv sync
+# Install dependencies using uv (use full path to ensure it's found)
+RUN /root/.cargo/bin/uv sync
 
 # Runtime stage
 FROM python:3.12-slim
