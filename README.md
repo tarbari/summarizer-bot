@@ -21,6 +21,7 @@ uv sync
 
 ### 2. Configure the Bot
 
+Rename `example.config.toml` to `config.toml`.
 Edit `config.toml`:
 
 ```toml
