@@ -42,8 +42,12 @@ Create `.env` file:
 
 ```bash
 echo "BOT_TOKEN=your_discord_bot_token_here" > .env
+echo "LLM_API_URL=http://your-api-endpoint.com/v1" >> .env
+echo "LLM_API_KEY=your-api-key-here" >> .env
 echo "CHANNEL_ID=your_channel_id" >> .env  # Optional override
 ```
+
+**Note**: The LLM API should be OpenAI-compatible (e.g., LM Studio, LocalAI, or OpenAI API).
 
 ### 3. Run the Bot
 
@@ -61,6 +65,8 @@ uv run python main.py
 ### Configuration
 
 - **Bot Token**: Must be set in `.env` file for security
+- **LLM API URL**: Must be set in `.env` file (OpenAI-compatible API endpoint)
+- **LLM API Key**: Must be set in `.env` file for API authentication
 - **Channel ID**: Can be set in `config.toml` or `.env`
 - **Summary Time**: 24-hour format (e.g., "09:00", "22:30")
 - **Timezone**: Any valid timezone (e.g., "UTC", "America/New_York", "Europe/Helsinki")
@@ -119,8 +125,9 @@ python -c "from bot.bot import SummarizerBot; print('Bot OK')"
 
 ## Security
 
-- **Never commit `.env`** - it contains sensitive tokens
+- **Never commit `.env`** - it contains sensitive tokens and API keys
 - **Bot token enforcement**: Configuration will fail if `.env` doesn't contain `BOT_TOKEN`
+- **API validation**: Configuration requires both `LLM_API_URL` and `LLM_API_KEY`
 - **Whitelist required**: Only whitelisted users' messages are processed
 
 ## Roadmap
