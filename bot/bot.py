@@ -209,7 +209,7 @@ class SummarizerBot:
             # TODO: Implement actual Discord API fetching for recovery
             # For now, this is a placeholder
             recovered = self.message_store.recover_missed_messages(
-                self.config.get_channel_id(), last_id
+                self.config.get_monitor_channel(), last_id
             )
             print(f"Recovered {recovered} missed messages")
         else:
