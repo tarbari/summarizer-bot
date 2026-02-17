@@ -62,8 +62,26 @@ uv run python main.py
 - **Bot Token**: Must be set in `.env` file for security
 - **Channel ID**: Can be set in `config.toml` or `.env`
 - **Summary Time**: 24-hour format (e.g., "09:00", "22:30")
-- **Timezone**: Any valid timezone (e.g., "UTC", "America/New_York")
+- **Timezone**: Any valid timezone (e.g., "UTC", "America/New_York", "Europe/Helsinki")
 - **Whitelist**: Add user IDs as strings
+
+#### Timezone Examples
+
+```toml
+# UTC (default)
+timezone = "UTC"
+
+# UTC+3 (Eastern European Time)
+timezone = "Europe/Helsinki"
+
+# UTC-5 (Eastern Standard Time)
+timezone = "America/New_York"
+
+# UTC+2 (Central European Time)
+timezone = "Europe/Berlin"
+```
+
+See full list of timezones: https://en.wikipedia.org/wiki/List_of_tz_database_time_zones
 
 ## Database
 
@@ -83,6 +101,9 @@ uv add package-name
 ```
 
 ### Running Tests
+
+> ![NOTE]
+> These tests won't do much. Unit tests will be implemented later.
 
 ```bash
 # Test configuration
@@ -104,9 +125,7 @@ python -c "from bot.bot import SummarizerBot; print('Bot OK')"
 ## Roadmap
 
 - [ ] Enhance summary generation with NLP
-- [ ] Add message filtering options
-- [ ] Implement backup/export functionality
-- [ ] Add monitoring and alerting
+- [ ] Add unit tetst
 
 ## License
 
