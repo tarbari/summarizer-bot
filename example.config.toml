@@ -1,0 +1,19 @@
+# Summarizer Bot Configuration
+# This file uses TOML format for configuration
+
+[bot]
+# Channel ID to monitor for messages
+channel_id = 0
+
+# Time to post daily summary (24h format)
+summary_time = "09:00"
+
+# Timezone for summary scheduling
+timezone = "UTC"
+
+[whitelist]
+# List of user IDs whose messages should be included in summaries
+# Use string format for user IDs
+users = [
+    "1234"
+]
