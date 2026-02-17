@@ -1,21 +1,12 @@
-# Dockerfile for Summarizer Bot
-# Single-stage build for simplicity
-
-FROM python:3.12-slim
+FROM ghcr.io/astral-sh/uv:python3.12-trixie-slim
 
 WORKDIR /app
 
-# Install system dependencies and uv
+# Install system dependencies
 RUN apt-get update && apt-get install -y --no-install-recommends \
     curl \
     ca-certificates \
     && rm -rf /var/lib/apt/lists/*
-
-# Install uv
-RUN curl -LsSf https://astral.sh/uv/install.sh | sh
-
-# Add uv to PATH
-ENV PATH="/root/.cargo/bin:${PATH}"
 
 # Create and switch to non-root user for security
 RUN useradd -m appuser && chown -R appuser:appuser /app
@@ -33,8 +24,7 @@ COPY main.py bot/ ./
 # Set environment variables (will be overridden by docker run -e or .env file)
 ENV BOT_TOKEN="" \
     LLM_API_URL="" \
-    LLM_API_KEY="" \
-    CHANNEL_ID=""
+    LLM_API_KEY=""
 
 # Health check
 HEALTHCHECK --interval=30s --timeout=3s \
