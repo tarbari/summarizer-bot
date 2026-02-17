@@ -35,10 +35,14 @@ class Config:
     def _override_with_env(self) -> None:
         """Override config values with environment variables if present"""
         # Bot token MUST come from .env (cannot be set in config.toml)
-        if "BOT_TOKEN" in os.environ:
+        if "BOT_TOKEN" and "LLM_API_URL" and "LLM_API_KEY" in os.environ:
             self.config_data["bot"]["token"] = os.environ["BOT_TOKEN"]
+            self.config_data["api"]["key"] = os.environ["LLM_API_KEY"]
+            self.config_data["api"]["url"] = os.environ["LLM_API_URL"]
         else:
-            raise ValueError("BOT_TOKEN must be set in .env file")
+            raise ValueError(
+                ".env file is missing BOT_TOKEN, LLM_API_KEY, or LLM_API_URL"
+            )
 
         # Channel ID can come from .env
         if "CHANNEL_ID" in os.environ:
@@ -51,6 +55,7 @@ class Config:
             "bot.summary_time": str,
             "bot.timezone": str,
             "whitelist.users": list,
+            "api.model": str,
         }
 
         for field_path, expected_type in required_fields.items():
@@ -114,3 +119,7 @@ class Config:
     def get_timezone(self) -> str:
         """Get the configured timezone"""
         return self.config_data["bot"]["timezone"]
+
+    def get_llm_model(self) -> str:
+        """Get the configured LLM model name"""
+        return self.config_data["api"]["model"]

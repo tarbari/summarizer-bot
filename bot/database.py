@@ -44,15 +44,129 @@ class MessageStore:
 
             conn.commit()
 
+    def _extract_embed_content(self, message: Message) -> str:
+        """Extract content from Discord embeds and format as readable text"""
+        if not message.embeds:
+            return ""
+
+        content_parts = []
+
+        for embed in message.embeds:
+            # Add title if available
+            if embed.title:
+                content_parts.append(f"**{embed.title}**")
+
+            # Add description if available
+            if embed.description:
+                content_parts.append(embed.description)
+
+            # Add fields if available
+            if embed.fields:
+                for field in embed.fields:
+                    if field.name and field.value:
+                        content_parts.append(f"**{field.name}**: {field.value}")
+
+            # Add URL if available (for source attribution)
+            if embed.url:
+                content_parts.append(f"Source: {embed.url}")
+
+            # Add footer if available and different from URL
+            if embed.footer and embed.footer.text and (not embed.url or embed.footer.text != embed.url):
+                content_parts.append(f"_{embed.footer.text}_")
+
+        return "\n".join(content_parts)
+
+    def _extract_component_content(self, message: Message) -> str:
+        """Extract content from Discord message components (buttons, select menus, etc.)"""
+        if not hasattr(message, 'components') or not message.components:
+            return ""
+
+        content_parts = []
+        
+        for component in message.components:
+            content_parts.extend(self._extract_from_component(component))
+
+        return "\n\n".join(content_parts) if content_parts else ""
+
+    def _extract_from_component(self, component) -> List[str]:
+        """Recursively extract content from a component and its children"""
+        content_parts = []
+        
+        # Handle different component types
+        if hasattr(component, 'content') and component.content:
+            # TextDisplay components have direct content
+            content_parts.append(component.content)
+        
+        # Handle children recursively
+        if hasattr(component, 'children') and component.children:
+            for child in component.children:
+                content_parts.extend(self._extract_from_component(child))
+        
+        # Handle other component attributes
+        if hasattr(component, 'label') and component.label:
+            content_parts.append(f"[{component.label}]")
+        if hasattr(component, 'value') and component.value:
+            content_parts.append(component.value)
+        if hasattr(component, 'placeholder') and component.placeholder:
+            content_parts.append(f"({component.placeholder})")
+        
+        return content_parts
+
+    def _extract_attachment_content(self, message: Message) -> str:
+        """Extract content from message attachments"""
+        if not hasattr(message, 'attachments') or not message.attachments:
+            return ""
+
+        content_parts = []
+        
+        for attachment in message.attachments:
+            if attachment.filename:
+                content_parts.append(f"Attachment: {attachment.filename}")
+            if attachment.url:
+                content_parts.append(f"[{attachment.url}]")
+
+        return "\n".join(content_parts) if content_parts else ""
+
     def store_message(self, message: Message) -> bool:
-        """Store a Discord message in the database"""
+        """Store a Discord message in the database, combining text, embed, component, and attachment content"""
         try:
+            # Start with text content
+            content_parts = []
+
+            # Add regular message content if it exists
+            if message.content.strip():
+                content_parts.append(message.content)
+
+            # Add embed content if embeds exist
+            if message.embeds:
+                embed_content = self._extract_embed_content(message)
+                if embed_content:
+                    content_parts.append(embed_content)
+
+            # Add component content if components exist
+            component_content = self._extract_component_content(message)
+            if component_content:
+                content_parts.append(f"Components: {component_content}")
+
+            # Add attachment content if attachments exist
+            attachment_content = self._extract_attachment_content(message)
+            if attachment_content:
+                content_parts.append(attachment_content)
+
+            # Combine all content
+            combined_content = "\n\n".join(content_parts)
+
+            # If no content at all, skip storage
+            if not combined_content.strip():
+                print(f"No content found in message from {message.author}")
+                return False
+
             with sqlite3.connect(self.db_path) as conn:
                 cursor = conn.cursor()
 
                 cursor.execute(
                     """
-                    INSERT OR IGNORE INTO messages 
+                    INSERT OR IGNORE INTO messages
                     (message_id, author_id, author_name, content, timestamp, channel_id)
                     VALUES (?, ?, ?, ?, ?, ?)
                 """,
@@ -60,7 +174,7 @@ class MessageStore:
                         str(message.id),
                         str(message.author.id),
                         str(message.author.name),
-                        message.content,
+                        combined_content,
                         message.created_at.isoformat(),
                         message.channel.id,
                     ),

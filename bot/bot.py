@@ -49,15 +49,18 @@ class SummarizerBot:
 
         @bot.command(name="summary")
         async def manual_summary_command(ctx: commands.Context):
-            """Manual summary command for testing"""
-            if ctx.author.id in [
-                int(uid) for uid in self.config.get_whitelisted_users()
-            ]:
-                await ctx.send("Generating manual summary...")
+            """Manual summary command that generates an LLM-powered summary"""
+            await ctx.send("Contacting LLM to generate summary...")
+
+            try:
+                # Use the async LLM summary method directly
+                summary = await self.summary_generator.generate_llm_summary()
+                await ctx.send(summary)
+            except Exception as e:
+                await ctx.send(f"Failed to generate LLM summary: {e}")
+                await ctx.send("Falling back to basic summary...")
                 summary = self.summary_generator.generate_daily_summary()
                 await ctx.send(summary)
-            else:  # TODO: Figure out if this should be a thing at all... Why would the summary command be available to only whitelisted users?
-                await ctx.send("You are not authorized to use this command.")
 
         @bot.command(name="lottonumerot")
         async def lotto_command(ctx: commands.Context):
@@ -133,11 +136,25 @@ class SummarizerBot:
         if message.channel.id == self.config.get_channel_id():
             # Check if author is whitelisted
             if str(message.author.id) in self.config.get_whitelisted_users():
+                # Debug: Check message components and attachments
+                has_components = hasattr(message, 'components') and message.components
+                has_attachments = hasattr(message, 'attachments') and message.attachments
+                has_embeds = message.embeds
+                has_content = message.content.strip()
+                
+                print(f"DEBUG: Message from {message.author} - Content: {has_content}, Embeds: {has_embeds}, Components: {has_components}, Attachments: {has_attachments}")
+                
                 # Store the message
                 if self.message_store.store_message(message):
-                    print(
-                        f"Stored message from {message.author}: {message.content[:50]}..."
-                    )
+                    # Improved logging to show content type
+                    if message.content.strip() and message.embeds:
+                        print(f"Stored combined message from {message.author}: text + embeds")
+                    elif message.content.strip():
+                        print(f"Stored text message from {message.author}: {message.content[:50]}...")
+                    elif message.embeds:
+                        print(f"Stored embed message from {message.author} (RSS feed)")
+                    else:
+                        print(f"Stored message from {message.author} (no visible content)")
 
                     # Update last processed message ID
                     self.message_store.set_last_processed_id(str(message.id))

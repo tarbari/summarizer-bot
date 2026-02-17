@@ -17,3 +17,8 @@ timezone = "UTC"
 users = [
     "1234"
 ]
+
+[api]
+# LLM Model to use for summarization
+# This should match a model available in your LM Studio server
+model = "gpt-3.5-turbo"
