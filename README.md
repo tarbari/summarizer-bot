@@ -128,6 +128,3 @@ python -c "from bot.bot import SummarizerBot; print('Bot OK')"
 - [ ] Enhance summary generation with NLP
 - [ ] Add unit tetst
 
-## License
-
-MIT
