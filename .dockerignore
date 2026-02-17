@@ -1,0 +1,31 @@
+# Docker ignore file
+
+# Ignore files that don't need to be in the image
+.env
+*.pyc
+__pycache__/
+*.pyo
+*.pyd
+.Python
+env/
+venv/
+.venv/
+.idea/
+.vscode/
+.DS_Store
+
+# Ignore data and logs (will be mounted as volumes)
+data/
+logs/
+
+# Ignore git files
+.git/
+.gitignore
+
+# Ignore build artifacts
+Dockerfile
+docker-compose.yml
+.dockerignore
+README.md
+LICENSE
+AGENTS.md

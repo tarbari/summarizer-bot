@@ -55,6 +55,63 @@ echo "CHANNEL_ID=your_channel_id" >> .env  # Optional override
 uv run python main.py
 ```
 
+## Docker Deployment
+
+### Prerequisites
+- Docker installed on your system
+- Docker Compose (for compose deployment)
+
+### Build the Docker Image
+```bash
+docker build -t summarizer-bot .
+```
+
+### Run with Docker
+```bash
+# Create data directory for persistent storage
+mkdir -p data logs
+
+# Run the container
+docker run -d --name summarizer-bot \
+  -v ./data:/app/data \
+  -v ./logs:/app/logs \
+  --env-file .env \
+  summarizer-bot
+```
+
+### Run with Docker Compose
+```bash
+# Start the services
+docker-compose up -d
+
+# View logs
+docker-compose logs -f
+
+# Stop the services
+docker-compose down
+```
+
+### Configuration Notes
+- The `.env` file is automatically loaded by Docker Compose
+- Database files are persisted in the `./data` directory
+- Logs are persisted in the `./logs` directory (optional)
+- To update configuration, modify `.env` and restart containers
+
+### Docker Commands
+```bash
+# Check container status
+docker ps
+
+# View container logs
+docker logs -f summarizer-bot
+
+# Restart container
+docker restart summarizer-bot
+
+# Update and rebuild
+docker-compose down && docker-compose up -d --build
+```
+
 ## Usage
 
 ### Commands
@@ -132,6 +189,4 @@ python -c "from bot.bot import SummarizerBot; print('Bot OK')"
 
 ## Roadmap
 
-- [ ] Enhance summary generation with NLP
 - [ ] Add unit tetst
-
