@@ -1,0 +1,115 @@
+import os
+from pathlib import Path
+from typing import Dict, Any, Optional
+from datetime import datetime, timedelta
+import toml
+from dotenv import load_dotenv
+import pytz
+
+
+class Config:
+    def __init__(self):
+        self.config_data: Dict[str, Any] = {}
+        self._load_config()
+        self._validate_config()
+
+    def _load_config(self) -> None:
+        """Load configuration from TOML file and environment variables"""
+        # Load .env file first
+        load_dotenv()
+
+        # Load TOML config
+        config_path = Path(__file__).parent.parent / "config.toml"
+        if config_path.exists():
+            with open(config_path, "r") as f:
+                self.config_data = toml.load(f)
+        else:
+            raise FileNotFoundError(f"Configuration file not found at {config_path}")
+
+        # Override with environment variables if present
+        self._override_with_env()
+
+    def _override_with_env(self) -> None:
+        """Override config values with environment variables if present"""
+        # Bot token MUST come from .env (cannot be set in config.toml)
+        if "BOT_TOKEN" in os.environ:
+            self.config_data["bot"]["token"] = os.environ["BOT_TOKEN"]
+        else:
+            # If no .env token, check if config.toml has a placeholder
+            if self.config_data["bot"]["token"] == "YOUR_BOT_TOKEN_HERE":
+                raise ValueError("BOT_TOKEN must be set in .env file, not in config.toml")
+
+        # Channel ID can come from .env
+        if "CHANNEL_ID" in os.environ:
+            self.config_data["bot"]["channel_id"] = int(os.environ["CHANNEL_ID"])
+
+    def _validate_config(self) -> None:
+        """Validate that required configuration values are present"""
+        required_fields = {
+            "bot.token": str,
+            "bot.channel_id": int,
+            "bot.summary_time": str,
+            "bot.timezone": str,
+            "whitelist.users": list
+        }
+
+        for field_path, expected_type in required_fields.items():
+            keys = field_path.split(".")
+            value = self.config_data
+            
+            try:
+                for key in keys:
+                    value = value[key]
+                
+                # Type validation
+                if not isinstance(value, expected_type):
+                    raise ValueError(f"{field_path} should be {expected_type.__name__}, got {type(value).__name__}")
+                    
+            except KeyError:
+                raise ValueError(f"Missing required configuration: {field_path}")
+            except Exception as e:
+                raise ValueError(f"Invalid configuration for {field_path}: {e}")
+
+    def get_bot_token(self) -> str:
+        """Get the Discord bot token"""
+        return self.config_data["bot"]["token"]
+
+    def get_channel_id(self) -> int:
+        """Get the channel ID to monitor"""
+        return self.config_data["bot"]["channel_id"]
+
+    def get_summary_time(self) -> datetime:
+        """Get the scheduled summary time as a timezone-aware datetime"""
+        time_str = self.config_data["bot"]["summary_time"]
+        timezone_str = self.config_data["bot"]["timezone"]
+        
+        try:
+            # Parse time
+            hour, minute = map(int, time_str.split(":"))
+            
+            # Get timezone
+            tz = pytz.timezone(timezone_str)
+            
+            # Create datetime for today at the specified time
+            now = datetime.now(tz)
+            summary_time = now.replace(hour=hour, minute=minute, second=0, microsecond=0)
+            
+            # If the time has already passed today, schedule for tomorrow
+            if summary_time < now:
+                summary_time = summary_time + timedelta(days=1)
+                
+            return summary_time
+            
+        except Exception as e:
+            raise ValueError(f"Invalid time configuration: {e}")
+
+    def get_whitelisted_users(self) -> list:
+        """Get the list of whitelisted user IDs"""
+        return self.config_data["whitelist"]["users"]
+
+    def get_timezone(self) -> str:
+        """Get the configured timezone"""
+        return self.config_data["bot"]["timezone"]
+
+
+

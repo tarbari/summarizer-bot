@@ -1,6 +1,4 @@
-def main():
-    print("Hello from summarizer-bot!")
-
+from bot.bot import SummarizerBot
 
 if __name__ == "__main__":
-    main()
+    SummarizerBot()
