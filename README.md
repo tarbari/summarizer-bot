@@ -2,16 +2,11 @@
 
 A Discord bot that monitors channel messages and generates daily summaries of conversations.
 
-## Features
+## Installation and Setup
 
-- **Message Logging**: Stores messages from whitelisted users in SQLite database
-- **Daily Summaries**: Automatically generates and posts summaries at configured time
-- **User Whitelisting**: Only processes messages from approved users
-- **Timezone Support**: Configurable timezone for scheduling
-- **Recovery System**: Recovers missed messages on bot restart
-- **Security**: Bot token must be set via .env file
-
-## Setup
+### Prerequisites
+- Python 3.12+
+- UV package manager (included in project)
 
 ### 1. Install Dependencies
 
@@ -21,30 +16,57 @@ uv sync
 
 ### 2. Configure the Bot
 
-Rename `example.config.toml` to `config.toml`.
-Edit `config.toml`:
+#### Configuration Files
 
-```toml
-[bot]
-channel_id = 123456789          # Channel ID to monitor
-summary_time = "09:00"         # Daily summary time (24h format)
-timezone = "UTC"               # Timezone for scheduling
-
-[whitelist]
-# List of user IDs whose messages should be included
-users = [
-    "user_id_1",
-    "user_id_2"
-]
+1. **Rename and edit config file:**
+```bash
+cp example.config.toml config.toml
 ```
 
-Create `.env` file:
+Edit `config.toml` with your settings:
 
+```toml
+# Summarizer Bot Configuration
+# This file uses TOML format for configuration
+
+[bot]
+# Channel ID to monitor for messages (this channel's messages are summarized)
+monitor_channel = 0
+
+# Time to post daily summary (24h format)
+summary_time = "09:00"
+
+# Timezone for summary scheduling
+timezone = "UTC"
+
+# List of channel IDs to send summaries to (summaries are sent to these channels only)
+subscriber_channels = [
+    123456789,  # Example: replace with actual channel IDs
+]
+
+[whitelist]
+# List of user IDs whose messages should be included in summaries
+# Use string format for user IDs
+users = [
+    "1234"
+]
+
+[api]
+# LLM Model to use for summarization
+# This should match a model available in your API
+model = "gpt-3.5-turbo"
+
+# Maximum tokens for LLM responses (adjust based on your model's context window)
+# Common values: 2000 for basic models, 4000-8000 for larger context windows
+# Note that the discord maximum length for a message is 2000 characters.
+max_tokens = 4000
+```
+
+2. **Create .env file:**
 ```bash
 echo "BOT_TOKEN=your_discord_bot_token_here" > .env
 echo "LLM_API_URL=http://your-api-endpoint.com/v1" >> .env
 echo "LLM_API_KEY=your-api-key-here" >> .env
-echo "CHANNEL_ID=your_channel_id" >> .env  # Optional override
 ```
 
 **Note**: The LLM API should be OpenAI-compatible (e.g., LM Studio, LocalAI, or OpenAI API).
@@ -55,20 +77,19 @@ echo "CHANNEL_ID=your_channel_id" >> .env  # Optional override
 uv run python main.py
 ```
 
-## Docker Deployment
+## Running with Docker
 
 ### Prerequisites
 - Docker installed on your system
 - Docker Compose (for compose deployment)
 
-### Build the Docker Image
-```bash
-docker build -t summarizer-bot .
-```
+### Build and Run
 
-### Run with Docker
 ```bash
-# Create data directory for persistent storage
+# Build the Docker image
+docker build -t summarizer-bot .
+
+# Create directories for persistent storage
 mkdir -p data logs
 
 # Run the container
@@ -79,57 +100,29 @@ docker run -d --name summarizer-bot \
   summarizer-bot
 ```
 
-### Run with Docker Compose
+### Using Docker Compose
+
 ```bash
-# Start the services
-docker-compose up -d
-
-# View logs
-docker-compose logs -f
-
-# Stop the services
-docker-compose down
+docker compose up -d
 ```
 
-### Configuration Notes
-- The `.env` file is automatically loaded by Docker Compose
-- Database files are persisted in the `./data` directory
-- Logs are persisted in the `./logs` directory (optional)
-- To update configuration, modify `.env` and restart containers
+## Configuration Options
 
-### Docker Commands
-```bash
-# Check container status
-docker ps
+### Environment Variables (required in .env)
+- `BOT_TOKEN`: Your Discord bot token
+- `LLM_API_URL`: OpenAI-compatible API endpoint
+- `LLM_API_KEY`: API authentication key
 
-# View container logs
-docker logs -f summarizer-bot
+### Config.toml Settings
+- `[bot.monitor_channel]`: Channel ID to monitor for messages (this channel's messages are summarized)
+- `[bot.summary_time]`: Daily summary time in 24h format (e.g., "09:00", "22:30")
+- `[bot.timezone]`: Timezone for scheduling (e.g., "UTC", "America/New_York", "Europe/Helsinki")
+- `[bot.subscriber_channels]`: Array of channel IDs that will receive the summaries
+- `[whitelist.users]`: Array of user IDs whose messages should be processed
+- `[api.model]`: LLM Model to use for summarization (e.g., "gpt-3.5-turbo")
+- `[api.max_tokens]`: Maximum tokens for LLM responses
 
-# Restart container
-docker restart summarizer-bot
-
-# Update and rebuild
-docker-compose down && docker-compose up -d --build
-```
-
-## Usage
-
-### Commands
-
-- `!echo` - Test command (responds with your message)
-- `!summary` - Manual summary generation (whitelist only)
-
-### Configuration
-
-- **Bot Token**: Must be set in `.env` file for security
-- **LLM API URL**: Must be set in `.env` file (OpenAI-compatible API endpoint)
-- **LLM API Key**: Must be set in `.env` file for API authentication
-- **Channel ID**: Can be set in `config.toml` or `.env`
-- **Summary Time**: 24-hour format (e.g., "09:00", "22:30")
-- **Timezone**: Any valid timezone (e.g., "UTC", "America/New_York", "Europe/Helsinki")
-- **Whitelist**: Add user IDs as strings
-
-#### Timezone Examples
+### Timezone Examples
 
 ```toml
 # UTC (default)
@@ -147,6 +140,19 @@ timezone = "Europe/Berlin"
 
 See full list of timezones: https://en.wikipedia.org/wiki/List_of_tz_database_time_zones
 
+## Features
+
+- **Message Logging**: Stores messages from whitelisted users in monitor channel into an SQLite database
+- **Daily Summaries**: Automatically generates and posts summaries at configured time
+- **User Whitelisting**: Only processes messages from approved users
+- **Timezone Support**: Configurable timezone for scheduling
+- **Recovery System**: Recovers missed messages on bot restart
+
+## Usage Commands
+
+- `!echo` - Test command (responds with your message)
+- `!summary` - Manual summary generation (whitelist only)
+
 ## Database
 
 Messages are stored in `data/messages.db` using SQLite. The database includes:
@@ -156,37 +162,6 @@ Messages are stored in `data/messages.db` using SQLite. The database includes:
 - Timestamps
 - Channel IDs
 
-## Development
-
-### Adding Dependencies
-
-```bash
-uv add package-name
-```
-
-### Running Tests
-
-> ![NOTE]
-> These tests won't do much. Unit tests will be implemented later.
-
-```bash
-# Test configuration
-python -c "from bot.config import Config; print('Config OK')"
-
-# Test database
-python -c "from bot.database import MessageStore; print('DB OK')"
-
-# Test full integration
-python -c "from bot.bot import SummarizerBot; print('Bot OK')"
-```
-
-## Security
-
-- **Never commit `.env`** - it contains sensitive tokens and API keys
-- **Bot token enforcement**: Configuration will fail if `.env` doesn't contain `BOT_TOKEN`
-- **API validation**: Configuration requires both `LLM_API_URL` and `LLM_API_KEY`
-- **Whitelist required**: Only whitelisted users' messages are processed
-
 ## Roadmap
 
-- [ ] Add unit tetst
+- [ ] Add unit tests
