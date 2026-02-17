@@ -15,6 +15,9 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
 # Install uv
 RUN curl -LsSf https://astral.sh/uv/install.sh | sh
 
+# Add uv to PATH for builder stage
+ENV PATH="/root/.cargo/bin:${PATH}"
+
 # Copy project files
 COPY pyproject.toml uv.lock ./
 
