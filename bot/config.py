@@ -1,6 +1,6 @@
 import os
 from pathlib import Path
-from typing import Dict, Any, Optional
+from typing import Dict, Any
 from datetime import datetime, timedelta
 import toml
 from dotenv import load_dotenv

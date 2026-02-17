@@ -3,7 +3,6 @@ from pathlib import Path
 from typing import List, Dict, Any, Optional
 from datetime import datetime, timedelta
 from discord import Message
-import os
 
 
 class MessageStore:
@@ -14,7 +13,7 @@ class MessageStore:
             data_dir = Path(__file__).parent.parent / "data"
             data_dir.mkdir(exist_ok=True)
             db_path = str(data_dir / "messages.db")
-        
+
         self.db_path = db_path
         self._init_db()
 
@@ -22,7 +21,7 @@ class MessageStore:
         """Initialize database tables if they don't exist"""
         with sqlite3.connect(self.db_path) as conn:
             cursor = conn.cursor()
-            
+
             # Create messages table
             cursor.execute("""
                 CREATE TABLE IF NOT EXISTS messages (
@@ -34,7 +33,7 @@ class MessageStore:
                     channel_id INTEGER NOT NULL
                 )
             """)
-            
+
             # Create bot_state table for tracking last processed message
             cursor.execute("""
                 CREATE TABLE IF NOT EXISTS bot_state (
@@ -42,7 +41,7 @@ class MessageStore:
                     value TEXT NOT NULL
                 )
             """)
-            
+
             conn.commit()
 
     def store_message(self, message: Message) -> bool:
@@ -50,20 +49,23 @@ class MessageStore:
         try:
             with sqlite3.connect(self.db_path) as conn:
                 cursor = conn.cursor()
-                
-                cursor.execute("""
+
+                cursor.execute(
+                    """
                     INSERT OR IGNORE INTO messages 
                     (message_id, author_id, author_name, content, timestamp, channel_id)
                     VALUES (?, ?, ?, ?, ?, ?)
-                """, (
-                    str(message.id),
-                    str(message.author.id),
-                    str(message.author.name),
-                    message.content,
-                    message.created_at.isoformat(),
-                    message.channel.id
-                ))
-                
+                """,
+                    (
+                        str(message.id),
+                        str(message.author.id),
+                        str(message.author.name),
+                        message.content,
+                        message.created_at.isoformat(),
+                        message.channel.id,
+                    ),
+                )
+
                 conn.commit()
                 return cursor.rowcount > 0
         except Exception as e:
@@ -75,14 +77,17 @@ class MessageStore:
         try:
             with sqlite3.connect(self.db_path) as conn:
                 cursor = conn.cursor()
-                
-                cursor.execute("""
+
+                cursor.execute(
+                    """
                     SELECT message_id, author_id, author_name, content, timestamp, channel_id
                     FROM messages
                     WHERE timestamp >= ?
                     ORDER BY timestamp ASC
-                """, (timestamp.isoformat(),))
-                
+                """,
+                    (timestamp.isoformat(),),
+                )
+
                 columns = [column[0] for column in cursor.description]
                 return [dict(zip(columns, row)) for row in cursor.fetchall()]
         except Exception as e:
@@ -99,11 +104,11 @@ class MessageStore:
         try:
             with sqlite3.connect(self.db_path) as conn:
                 cursor = conn.cursor()
-                
+
                 cursor.execute("""
                     SELECT value FROM bot_state WHERE key = 'last_processed_id'
                 """)
-                
+
                 result = cursor.fetchone()
                 return result[0] if result else None
         except Exception as e:
@@ -115,32 +120,40 @@ class MessageStore:
         try:
             with sqlite3.connect(self.db_path) as conn:
                 cursor = conn.cursor()
-                
-                cursor.execute("""
+
+                cursor.execute(
+                    """
                     INSERT OR REPLACE INTO bot_state (key, value)
                     VALUES (?, ?)
-                """, ('last_processed_id', message_id))
-                
+                """,
+                    ("last_processed_id", message_id),
+                )
+
                 conn.commit()
                 return True
         except Exception as e:
             print(f"Error setting last processed ID: {e}")
             return False
 
-    def get_message_count_by_user(self, since_timestamp: Optional[datetime] = None) -> Dict[str, int]:
+    def get_message_count_by_user(
+        self, since_timestamp: Optional[datetime] = None
+    ) -> Dict[str, int]:
         """Get message count by user (for placeholder summary)"""
         try:
             with sqlite3.connect(self.db_path) as conn:
                 cursor = conn.cursor()
-                
+
                 if since_timestamp:
-                    cursor.execute("""
+                    cursor.execute(
+                        """
                         SELECT author_name, COUNT(*) as count
                         FROM messages
                         WHERE timestamp >= ?
                         GROUP BY author_name
                         ORDER BY count DESC
-                    """, (since_timestamp.isoformat(),))
+                    """,
+                        (since_timestamp.isoformat(),),
+                    )
                 else:
                     cursor.execute("""
                         SELECT author_name, COUNT(*) as count
@@ -148,15 +161,19 @@ class MessageStore:
                         GROUP BY author_name
                         ORDER BY count DESC
                     """)
-                
+
                 return dict(cursor.fetchall())
         except Exception as e:
             print(f"Error getting message counts: {e}")
             return {}
 
-    def recover_missed_messages(self, channel_id: int, last_message_id: Optional[str] = None) -> int:
+    def recover_missed_messages(
+        self, channel_id: int, last_message_id: Optional[str] = None
+    ) -> int:
         """Recover missed messages from Discord API"""
         # This would need a Discord client to fetch messages
         # For now, this is a placeholder that will be implemented when we integrate with the bot
-        print(f"Recovery would fetch messages from channel {channel_id} since {last_message_id}")
+        print(
+            f"Recovery would fetch messages from channel {channel_id} since {last_message_id}"
+        )
         return 0
