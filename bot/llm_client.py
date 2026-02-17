@@ -57,13 +57,17 @@ class LLMClient:
 
         messages_text = "\n".join(formatted_messages)
 
-        # Create the full prompt - focused on news summary format
+        # Create the full prompt - focused on news summary format with character limit
         prompt = f"""Act as a professional news editor. The following are news articles and updates shared in a Discord news channel over the last 24 hours. Create a concise news summary in the style of a professional news briefing.
+
+IMPORTANT: Your response MUST be 2000 characters or less to fit within Discord's message limits. Be concise and prioritize the most important information.
 
 News Articles and Updates:
 {messages_text}
 
-Please provide a short news summary (2-4 paragraphs) in a professional journalistic style. Focus on the most newsworthy items, key developments, and important information. Write in a neutral, objective tone suitable for a news publication. Include the most significant stories first. Identify the links to the source articles and add those to the message."""
+Please provide a short news summary (2-4 paragraphs) in a professional journalistic style. Focus on the most newsworthy items, key developments, and important information. Write in a neutral, objective tone suitable for a news publication. Include the most significant stories first. Identify the links to the source articles and add those to the message.
+
+REMEMBER: Your entire response must be ≤2000 characters. If the content is too long, focus only on the top 2-3 most important stories."""
 
         return prompt
 
