@@ -1,4 +1,4 @@
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
 from discord.ext import commands
 from discord import TextChannel
 
@@ -64,7 +64,7 @@ class SummaryGenerator:
 
         try:
             # Get messages from last 24 hours
-            twenty_four_hours_ago = datetime.now() - timedelta(hours=24)
+            twenty_four_hours_ago = datetime.now(timezone.utc) - timedelta(hours=24)
             messages = self.message_store.get_messages_since(twenty_four_hours_ago)
 
             if not messages:
@@ -120,7 +120,7 @@ class SummaryGenerator:
                 return self._truncate_message(summary)
 
         # Fallback to placeholder implementation
-        twenty_four_hours_ago = datetime.now() - timedelta(hours=24)
+        twenty_four_hours_ago = datetime.now(timezone.utc) - timedelta(hours=24)
         message_counts = self.message_store.get_message_count_by_user(
             twenty_four_hours_ago
         )

@@ -84,7 +84,7 @@ class SummarizerBot:
     def _get_task_time(self) -> datetime_time:
         """Calculate the time for the daily task"""
         summary_datetime = self.summary_generator.get_summary_schedule()
-        return summary_datetime.time()
+        return summary_datetime.timetz()
 
     async def _setup_initial_task_delay(self):
         """Set up the initial delay for the first task run"""

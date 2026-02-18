@@ -87,7 +87,7 @@ REMEMBER: Your entire response must be ≤2000 characters. If the content is too
 
             # Generate the summary
             response = await self.model.ainvoke(messages_for_llm)
-            summary = self.output_parser.parse_result([response])
+            summary = self.output_parser.invoke(response)
 
             return summary
 
