@@ -29,6 +29,7 @@ class SummarizerBot:
         """Set up and configure the Discord bot"""
         # Configure intents
         intents = Intents(68608)
+        intents.guilds = True
         intents.messages = True
         intents.message_content = True
 
