@@ -71,6 +71,32 @@ REMEMBER: Your entire response must be ≤2000 characters. If the content is too
 
         return prompt
 
+    async def condense_summary(self, summary: str, current_length: int) -> str:
+        """Ask the LLM to shorten an over-limit summary to under 2000 characters"""
+        try:
+            overage = current_length - 2000
+            prompt = (
+                f"The following news summary is {current_length} characters long, "
+                f"which is {overage} characters over Discord's 2000-character limit. "
+                f"Shorten it to under 2000 characters total. "
+                f"Keep the most important stories and preserve the journalistic style. "
+                f"Return ONLY the shortened summary text with no commentary.\n\n"
+                f"{summary}"
+            )
+
+            messages_for_llm = [
+                SystemMessage(
+                    content="You are a helpful assistant that condenses text to fit within character limits."
+                ),
+                HumanMessage(content=prompt),
+            ]
+
+            response = await self.model.ainvoke(messages_for_llm)
+            return self.output_parser.invoke(response)
+
+        except Exception as e:
+            raise RuntimeError(f"Failed to condense summary: {e}")
+
     async def generate_summary(self, messages: list[Dict[str, Any]]) -> str:
         """Generate a summary using the LLM"""
         try:

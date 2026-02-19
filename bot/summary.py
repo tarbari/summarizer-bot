@@ -4,7 +4,7 @@ from discord import TextChannel
 
 # Constants
 DISCORD_MESSAGE_LIMIT = 2000  # Maximum characters for a Discord message
-MAX_RETRY_ATTEMPTS = 2  # Maximum attempts to get a valid summary
+MAX_CONDENSATION_ATTEMPTS = 3  # Maximum condensation attempts after initial generation
 
 
 class SummaryGenerator:
@@ -86,38 +86,46 @@ class SummaryGenerator:
 
     async def generate_daily_summary(self) -> str:
         """
-        Generate a daily summary of messages
-        Uses LLM if available, falls back to placeholder if not
-        Implements retry logic for messages that exceed Discord's character limit
+        Generate a daily summary of messages.
+        Uses LLM if available, falls back to placeholder if not.
+        Phase 1: generate initial summary.
+        Phase 2: if over the limit, iteratively condense using the LLM until it fits.
+        Phase 3: truncate only as a last resort.
         """
-        # Try to use LLM summary if available
         if self.llm_client:
-            for attempt in range(MAX_RETRY_ATTEMPTS):
-                try:
-                    summary = await self.generate_llm_summary()
+            try:
+                # Phase 1: initial generation
+                summary = await self.generate_llm_summary()
 
-                    # Validate the length and retry if too long
+                if self._validate_message_length(summary):
+                    return summary
+
+                # Phase 2: targeted condensation — the LLM sees its own output and the
+                # exact overage, making this a much more constrained task than a blind retry.
+                for attempt in range(1, MAX_CONDENSATION_ATTEMPTS + 1):
+                    print(
+                        f"LLM summary too long ({len(summary)} chars), "
+                        f"condensing (attempt {attempt}/{MAX_CONDENSATION_ATTEMPTS})..."
+                    )
+                    # Condense only the body (strip the fixed header) so the LLM isn't
+                    # penalised for characters it didn't write.
+                    header = "**Daily Channel Summary**\n*Summary period: Last 24 hours*\n\n"
+                    body = summary[len(header):] if summary.startswith(header) else summary
+                    condensed_body = await self.llm_client.condense_summary(body, len(body))
+                    summary = header + condensed_body if summary.startswith(header) else condensed_body
+
                     if self._validate_message_length(summary):
                         return summary
-                    else:
-                        print(
-                            f"LLM summary too long ({len(summary)} chars), retrying with more concise instructions..."
-                        )
-                        # The prompt already includes length instructions, so we'll just retry
-                        # If it fails again, we'll truncate on the last attempt
 
-                except Exception as e:
-                    print(
-                        f"LLM summary failed on attempt {attempt + 1}, falling back to placeholder: {e}"
-                    )
-                    break
-
-            # If we get here, either LLM failed or we need to truncate the result
-            if "summary" in locals() and not self._validate_message_length(summary):
+                # Phase 3: emergency truncation (should be very rare)
                 print(
-                    f"Final LLM summary still too long ({len(summary)} chars), truncating..."
+                    f"Summary still too long ({len(summary)} chars) after "
+                    f"{MAX_CONDENSATION_ATTEMPTS} condensation attempts, truncating..."
                 )
                 return self._truncate_message(summary)
+
+            except Exception as e:
+                print(f"LLM summary failed, falling back to placeholder: {e}")
 
         # Fallback to placeholder implementation
         twenty_four_hours_ago = datetime.now(timezone.utc) - timedelta(hours=24)

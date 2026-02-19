@@ -29,5 +29,7 @@ users = [
 model = "gpt-3.5-turbo"
 
 # Maximum tokens for LLM responses (adjust based on your model's context window)
-# Common values: 2000 for basic models, 4000-8000 for larger context windows
-max_tokens = 4000
+# Tip: Discord's 2000-character limit is roughly 500-600 tokens (English text averages
+# ~3.5 chars/token). Setting max_tokens to ~600 prevents most overflows before they
+# happen, reducing the need for condensation retries.
+max_tokens = 600
