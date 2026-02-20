@@ -1,0 +1,14 @@
+services:
+  summarizer-bot:
+    build: .
+    container_name: summarizer-bot
+    env_file: .env
+    restart: unless-stopped
+    volumes:
+      - ./data:/app/data  # Persist SQLite database
+      - ./logs:/app/logs  # Optional: persist logs
+    healthcheck:
+      test: ["CMD-SHELL", "python -c 'import sys; sys.exit(0 if open(\"main.py\").read() else 1)' || exit 1"]
+      interval: 30s
+      timeout: 3s
+      retries: 3
