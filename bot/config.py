@@ -21,7 +21,6 @@ class Config:
         load_dotenv()
 
         # Load TOML config
-        # TODO: This looks sus.. Check if this logic is ok.
         config_path = Path(__file__).parent.parent / "config.toml"
         if config_path.exists():
             with open(config_path, "r") as f:
